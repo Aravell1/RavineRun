@@ -14,7 +14,6 @@ public class GenerateLevel : MonoBehaviour
     private int secNum;
     private float zPos;
     private float sectionLength;
-    //private bool creatingSection = false;
 
     private void Start()
     {
@@ -33,7 +32,7 @@ public class GenerateLevel : MonoBehaviour
     {
         if (GameManager.Instance.state == GameManager.GameState.Game)
         {
-            if (createdSections[0].transform.position.z < -50)
+            if (createdSections[0].transform.position.z < -sectionLength)
             {
                 GenerateSection();
                 Destroy(createdSections[0]);

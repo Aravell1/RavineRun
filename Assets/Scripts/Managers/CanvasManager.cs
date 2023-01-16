@@ -40,6 +40,8 @@ public class CanvasManager : MonoBehaviour
 
     void Start()
     {
+        GameObject.Find("GameManager").GetComponent<GameManager>().enabled = true;
+
         if (scoreText)
             scoreText.text = GameManager.Instance.Score.ToString();
         if (distanceText)

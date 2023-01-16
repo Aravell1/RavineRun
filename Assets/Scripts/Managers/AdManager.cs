@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Advertisements;
 
+[DefaultExecutionOrder(-50)]
 public class AdManager : Singleton<AdManager>, IUnityAdsInitializationListener, IUnityAdsLoadListener, IUnityAdsShowListener
 {
     public int dailyAds = 0;

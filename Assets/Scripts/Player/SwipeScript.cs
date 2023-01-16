@@ -10,10 +10,13 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class SwipeScript : MonoBehaviour
 {
-	private const float MIN_SWIPE_LENGTH = 300f;
+	private const float MIN_SWIPE_LENGTH = 250f;
 	private const float MAX_SWIPE_TIME = 0.35f;
 
-	private Vector3 _mouseStartPos;
+    private Vector2 fingerDownPos;
+    private Vector2 fingerUpPos;
+
+    private Vector3 _mouseStartPos;
 	private float _elapsedTime;
 	private bool _startTimer;
 
@@ -33,7 +36,7 @@ public class SwipeScript : MonoBehaviour
 #endif
 
 #if UNITY_ANDROID || UNITY_IOS
-		if (Input.touchCount == 1)
+		/*if (Input.touchCount == 1)
 		{
 			Touch touch = Input.GetTouch(0);
 			if (touch.phase == TouchPhase.Began)
@@ -47,10 +50,26 @@ public class SwipeScript : MonoBehaviour
                 if (GameManager.Instance.GetEnableControls())
                     Swipe(touch.deltaPosition);
 			}
-		}
+		}*/
+
+        foreach (Touch touch in Input.touches)
+        {
+            if (touch.phase == TouchPhase.Began)
+            {
+                fingerUpPos = touch.position;
+                fingerDownPos = touch.position;
+            }
+
+            //Detects swipe after finger is released from screen
+            if (touch.phase == TouchPhase.Ended)
+            {
+                fingerDownPos = touch.position;
+                Swipe(fingerDownPos - fingerUpPos);
+            }
+        }
 #endif
 
-		if (_startTimer)
+        if (_startTimer)
 		{
 			if (_elapsedTime < MAX_SWIPE_TIME)
 			{
@@ -87,7 +106,7 @@ public class SwipeScript : MonoBehaviour
 
 	private void Swipe(Vector3 pDirection)
 	{
-		if (pDirection.magnitude > MIN_SWIPE_LENGTH)
+		if (VerticalMoveValue() > MIN_SWIPE_LENGTH && VerticalMoveValue() > HorizontalMoveValue())
 		{
 			if (pDirection.y > 0)
 				player.Jump();
@@ -100,4 +119,14 @@ public class SwipeScript : MonoBehaviour
             }
 		}
 	}
+
+    float VerticalMoveValue()
+    {
+        return Mathf.Abs(fingerDownPos.y - fingerUpPos.y);
+    }
+
+    float HorizontalMoveValue()
+    {
+        return Mathf.Abs(fingerDownPos.x - fingerUpPos.x);
+    }
 }

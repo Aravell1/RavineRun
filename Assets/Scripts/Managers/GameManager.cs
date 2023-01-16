@@ -36,7 +36,7 @@ public class PlayerData
     public int slowFeather = 0;
 }
 
-[DefaultExecutionOrder(-1)]
+[DefaultExecutionOrder(-100)]
 public class GameManager : Singleton<GameManager>
 {
     int _score = 0;
@@ -52,6 +52,7 @@ public class GameManager : Singleton<GameManager>
 
     private static readonly string key = "3817498320592469564264598042905429143";
     [Header("Saved Settings")]
+    private string dataPath;
     public PlayerData Data;
     public bool adPlayed = false;
     public static int maxDailyCoins = 100;
@@ -88,7 +89,8 @@ public class GameManager : Singleton<GameManager>
         {
             _score = value;
 
-            canvas.scoreText.text = _score.ToString();
+            if (canvas)
+                canvas.scoreText.text = _score.ToString();
         }
     }
 
@@ -113,7 +115,8 @@ public class GameManager : Singleton<GameManager>
 
             _distance = value;
 
-            canvas.distanceText.text = Mathf.Floor(_distance).ToString();
+            if (canvas)
+                canvas.distanceText.text = Mathf.Floor(_distance).ToString();
         }
     }
 
@@ -128,12 +131,18 @@ public class GameManager : Singleton<GameManager>
         {
             _health = value;
 
-            canvas.healthText.text = _health.ToString();
+            if (canvas)
+                canvas.healthText.text = _health.ToString();
 
             if (_health <= 0)
             {
                 if (AdManager.Instance.dailyAds < AdManager.maxDailyAds && !adPlayed)
-                    canvas.ShowAdMenu();
+                {
+                    if (canvas)
+                    {
+                        canvas.ShowAdMenu();
+                    }
+                }
                 else
                     GameOver();
             }
@@ -144,16 +153,22 @@ public class GameManager : Singleton<GameManager>
     {
         base.Awake();
 
-        if (File.Exists(Application.dataPath + "/Saves/0.sav"))
+        Application.targetFrameRate = 60;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
+        //dataPath = Application.dataPath + "/Saves/Save01.sav";
+        dataPath = Application.persistentDataPath + Path.DirectorySeparatorChar + "Save01.sav";
+
+        if (File.Exists(dataPath))
         {
-            string playerDataJSON = File.ReadAllText(Application.dataPath + "/Saves/0.sav");
+            string playerDataJSON = File.ReadAllText(dataPath);
             JsonUtility.FromJsonOverwrite(EncryptDecrypt(playerDataJSON), Data);
         }
         else
         {
             string playerDataJSON = EncryptDecrypt(JsonUtility.ToJson(Data));
-            File.Create(Application.dataPath + "/Saves/0.sav");
-            File.WriteAllText(Application.dataPath + "/Saves/0.sav", playerDataJSON);
+            File.Create(dataPath);
+            File.WriteAllText(dataPath, playerDataJSON);
         }
         LoadGame();
 
@@ -164,8 +179,10 @@ public class GameManager : Singleton<GameManager>
     }
 
     // Update is called once per frame
-    void Update()
+    protected override void Update()
     {
+        base.Update();
+
         if (startSpeed == 0)
             startSpeed = moveSpeed;
 
@@ -178,7 +195,9 @@ public class GameManager : Singleton<GameManager>
         }
 
         if (addingDistance && state == GameState.Game)
+        {
             StartCoroutine(AddDistance());
+        }
 
         if (Input.GetKeyDown(KeyCode.Escape))
         {
@@ -187,6 +206,11 @@ public class GameManager : Singleton<GameManager>
             else if (state == GameState.Game)
                 SetGameState(GameState.Pause);
         }
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        canvas = GameObject.Find("Canvas").GetComponent<CanvasManager>();
     }
 
     public void HalveSpeed()
@@ -214,7 +238,8 @@ public class GameManager : Singleton<GameManager>
 
     public void ResumeGame()
     {
-        canvas.pauseMenu.SetActive(false);
+        if (canvas)
+            canvas.pauseMenu.SetActive(false);
         Time.timeScale = 1f;
         enableControls = true;
         SetGameState(GameState.Game);
@@ -265,7 +290,8 @@ public class GameManager : Singleton<GameManager>
     {
         addingDistance = true;
         enableControls = true;
-        canvas.gameHUD.SetActive(true);
+        if (canvas)
+            canvas.gameHUD.SetActive(true);
     }
 
     IEnumerator AddDistance()
@@ -318,12 +344,12 @@ public class GameManager : Singleton<GameManager>
 
         //Showing Data
         string playerDataJSON = EncryptDecrypt(JsonUtility.ToJson(Data));
-        if (File.Exists(Application.dataPath + "/Saves/0.sav")) 
-            File.WriteAllText(Application.dataPath + "/Saves/0.sav", playerDataJSON);
+        if (File.Exists(dataPath)) 
+            File.WriteAllText(dataPath, playerDataJSON);
         else
         {
-            File.Create(Application.dataPath + "/Saves/0.sav");
-            File.WriteAllText(Application.dataPath + "/Saves/0.sav", playerDataJSON);
+            File.Create(dataPath);
+            File.WriteAllText(dataPath, playerDataJSON);
         }
     }
 
